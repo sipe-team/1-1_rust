@@ -1,5 +1,5 @@
 [package]
-name = "rustlings"
+name = "rustlings_clogic"
 description = "Small exercises to get you used to reading and writing Rust code!"
 version = "5.5.1"
 authors = [
