@@ -20,7 +20,7 @@
 //
 // No hints this time!
 
-// I AM NOT DONE
+use std::ops::Add;
 
 pub enum Command {
     Uppercase,
@@ -28,15 +28,29 @@ pub enum Command {
     Append(usize),
 }
 
+impl Command {
+    pub fn transform(&self, string: &str) -> String {
+        match self {
+            Command::Uppercase => string.to_uppercase(),
+            Command::Trim => string.trim().to_string(),
+            Command::Append(number) => {
+                let mut string = String::from(string);
+                for _i in 0..*number {
+                    string += "bar";
+                }
+                string
+            }
+        }
+    }
+}
+
 mod my_module {
     use super::Command;
 
-    // TODO: Complete the function signature!
-    pub fn transformer(input: ???) -> ??? {
-        // TODO: Complete the output declaration!
-        let mut output: ??? = vec![];
+    pub fn transformer(input: Vec<(&str, Command)>) -> Vec<String> {
+        let mut output = Vec::new();
         for (string, command) in input.iter() {
-            // TODO: Complete the function body. You can do it!
+            output.push(command.transform(string));
         }
         output
     }
@@ -44,9 +58,9 @@ mod my_module {
 
 #[cfg(test)]
 mod tests {
-    // TODO: What do we need to import to have `transformer` in scope?
-    use ???;
     use super::Command;
+    // TODO: What do we need to import to have `transformer` in scope?
+    use super::my_module::transformer;
 
     #[test]
     fn it_works() {
