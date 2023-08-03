@@ -6,10 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-actix-web = "4"
+actix-web = "^4.3.1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 serde = "1"
 config = { version = "0.13", default-features = false, features = ["yaml"] }
+sea-orm = { version = "^0.12.1", features = ["sqlx-postgres", "runtime-actix-native-tls", "macros"] }
+migration-jiho = { path = "migration" }
 reqwest = {version = "0.11", default-features = false, features = ["json", "rustls-tls"]}
 log = "0.4"
 tracing = "0.1"
