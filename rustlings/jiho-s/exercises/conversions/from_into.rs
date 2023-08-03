@@ -40,10 +40,35 @@ impl Default for Person {
 // If while parsing the age, something goes wrong, then return the default of
 // Person Otherwise, then return an instantiated Person object with the results
 
-// I AM NOT DONE
+fn person_or_none(s: &str) -> Option<Person> {
+    if s.len() == 0 {
+        return None;
+    }
+
+    let mut split = s.split(",");
+
+    let name = split.next()?;
+    let age = split.next()?;
+
+    if let Some(_) = split.next() {
+        return None;
+    }
+
+    if name.is_empty() {
+        return None;
+    }
+    Some(Person {
+        name: name.to_string(),
+        age: age.parse().ok()?,
+    })
+}
 
 impl From<&str> for Person {
     fn from(s: &str) -> Person {
+        match person_or_none(s) {
+            Some(person) => person,
+            None => Person::default(),
+        }
     }
 }
 
@@ -59,6 +84,7 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[test]
     fn test_default() {
         // Test that the default person is 30 year old John
@@ -66,6 +92,7 @@ mod tests {
         assert_eq!(dp.name, "John");
         assert_eq!(dp.age, 30);
     }
+
     #[test]
     fn test_bad_convert() {
         // Test that John is returned when bad string is provided
@@ -73,6 +100,7 @@ mod tests {
         assert_eq!(p.name, "John");
         assert_eq!(p.age, 30);
     }
+
     #[test]
     fn test_good_convert() {
         // Test that "Mark,20" works
@@ -80,6 +108,7 @@ mod tests {
         assert_eq!(p.name, "Mark");
         assert_eq!(p.age, 20);
     }
+
     #[test]
     fn test_bad_age() {
         // Test that "Mark,twenty" will return the default person due to an
