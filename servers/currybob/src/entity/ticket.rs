@@ -3,7 +3,6 @@
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
-use chrono::NaiveDateTime;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
 #[sea_orm(table_name = "Ticket")]
@@ -23,17 +22,17 @@ pub struct Model {
     pub priority: i32,
 }
 
-impl Model {
-    pub fn start_date_as_naive_date_time(&self) -> Option<NaiveDateTime> {
-        self.start_date.map(|timestamp| NaiveDateTime::from_timestamp(timestamp, 0))
-    }
-
-    pub fn end_date_as_naive_date_time(&self) -> Option<NaiveDateTime> {
-        self.end_date.map(|timestamp| NaiveDateTime::from_timestamp(timestamp, 0))
-    }
-}
-
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct UpdateModel {
+    pub swimlane_id: i32,
+    pub name: String,
+    pub description: Option<String>,
+    pub start_date: Option<i64>,
+    pub end_date: Option<i64>,
+    pub priority: i32,
+}

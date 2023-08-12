@@ -20,3 +20,10 @@ pub struct Model {
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct UpdateModel {
+    pub board_id: i32,
+    pub name: String,
+    pub description: Option<String>,
+}
