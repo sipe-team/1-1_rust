@@ -9,7 +9,6 @@ use serde::{Deserialize, Serialize};
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
-    #[sea_orm(unique)]
     pub swimlane_id: i32,
     #[sea_orm(column_type = "Text", unique)]
     pub name: String,
@@ -28,11 +27,18 @@ pub enum Relation {}
 impl ActiveModelBehavior for ActiveModel {}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct UpdateModel {
+pub struct CreateModel {
     pub swimlane_id: i32,
     pub name: String,
+    pub priority: i32,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct UpdateModel {
+    pub swimlane_id: Option<i32>,
+    pub name: Option<String>,
     pub description: Option<String>,
     pub start_date: Option<i64>,
     pub end_date: Option<i64>,
-    pub priority: i32,
+    pub priority: Option<i32>,
 }
