@@ -4,7 +4,7 @@ use crate::AppState;
 
 use actix_web::{delete, get, post, put, web, HttpResponse, Responder, Scope};
 
-#[get("/")]
+#[get("")]
 async fn find_all_boards(state: web::Data<AppState>) -> impl Responder {
     match board_service::find_all(&state.db_conn).await {
         Ok(boards) => HttpResponse::Ok().json(boards),
@@ -21,7 +21,7 @@ async fn find_one_board(
         Ok(board_id) => match board_service::find_one(board_id, &state.db_conn).await {
             Ok(board_option) => match board_option {
                 Some(board) => HttpResponse::Ok().json(board),
-                None => HttpResponse::NotFound().body("Board not found"),
+                None => HttpResponse::NotFound().body("해당 board를 찾을 수 없습니다"),
             },
             Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
         },
@@ -29,9 +29,12 @@ async fn find_one_board(
     }
 }
 
-#[post("/{new_name}")]
-async fn add_board(state: web::Data<AppState>, new_name: web::Path<String>) -> impl Responder {
-    match board_service::create(new_name.to_string(), &state.db_conn).await {
+#[post("")]
+async fn add_board(
+    state: web::Data<AppState>,
+    data: web::Json<board::CreateModel>
+) -> impl Responder {
+    match board_service::create(data.into_inner(), &state.db_conn).await {
         Ok(board) => HttpResponse::Ok().json(board),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
@@ -50,7 +53,7 @@ async fn update_board(
             {
                 Ok(board_option) => match board_option {
                     Some(board) => HttpResponse::Ok().json(board),
-                    None => HttpResponse::NotFound().body("Board not found"),
+                    None => HttpResponse::NotFound().body("해당 board를 찾을 수 없습니다"),
                 },
                 Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
             }
@@ -65,9 +68,9 @@ async fn delete_board(state: web::Data<AppState>, board_id: web::Path<String>) -
         Ok(board_id) => match board_service::delete(board_id, &state.db_conn).await {
             Ok(delete_result) => match delete_result {
                 Some(result) => {
-                    HttpResponse::Ok().body(format!("{} row deleted", result.rows_affected))
+                    HttpResponse::Ok().body(format!("{}개의 row가 삭제되었습니다", result.rows_affected))
                 }
-                None => HttpResponse::Ok().body("No board deleted"),
+                None => HttpResponse::Ok().body("board가 삭제되지 않았습니다"),
             },
             Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
         },

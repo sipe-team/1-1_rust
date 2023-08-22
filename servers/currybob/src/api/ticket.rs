@@ -4,7 +4,7 @@ use crate::AppState;
 
 use actix_web::{delete, get, post, put, web, HttpResponse, Responder, Scope};
 
-#[get("/")]
+#[get("")]
 async fn find_all_tickets(state: web::Data<AppState>) -> impl Responder {
     match ticket_service::find_all(&state.db_conn).await {
         Ok(tickets) => HttpResponse::Ok().json(tickets),
@@ -21,7 +21,7 @@ async fn find_one_ticket(
         Ok(ticket_id) => match ticket_service::find_one(ticket_id, &state.db_conn).await {
             Ok(ticket_option) => match ticket_option {
                 Some(ticket) => HttpResponse::Ok().json(ticket),
-                None => HttpResponse::NotFound().body("Ticket not found"),
+                None => HttpResponse::NotFound().body("해당 ticket을 찾을 수 없습니다"),
             },
             Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
         },
@@ -29,9 +29,12 @@ async fn find_one_ticket(
     }
 }
 
-#[post("/{new_name}")]
-async fn add_ticket(state: web::Data<AppState>, new_name: web::Path<String>) -> impl Responder {
-    match ticket_service::create(new_name.to_string(), &state.db_conn).await {
+#[post("")]
+async fn add_ticket(
+    state: web::Data<AppState>,
+    data: web::Json<ticket::CreateModel>,
+) -> impl Responder {
+    match ticket_service::create(data.into_inner(), &state.db_conn).await {
         Ok(ticket) => HttpResponse::Ok().json(ticket),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
@@ -50,7 +53,7 @@ async fn update_ticket(
             {
                 Ok(ticket_option) => match ticket_option {
                     Some(ticket) => HttpResponse::Ok().json(ticket),
-                    None => HttpResponse::NotFound().body("Ticket not found"),
+                    None => HttpResponse::NotFound().body("해당 ticket을 찾을 수 없습니다"),
                 },
                 Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
             }
@@ -65,9 +68,9 @@ async fn delete_ticket(state: web::Data<AppState>, ticket_id: web::Path<String>)
         Ok(ticket_id) => match ticket_service::delete(ticket_id, &state.db_conn).await {
             Ok(delete_result) => match delete_result {
                 Some(result) => {
-                    HttpResponse::Ok().body(format!("{} row deleted", result.rows_affected))
+                    HttpResponse::Ok().body(format!("{}개의 row가 삭제되었습니다", result.rows_affected))
                 }
-                None => HttpResponse::Ok().body("No ticket deleted"),
+                None => HttpResponse::Ok().body("ticket이 삭제되지 않았습니다"),
             },
             Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
         },
