@@ -6,14 +6,14 @@ CREATE TABLE "Board" (
 
 CREATE TABLE "Swimlane" (
   "id" serial PRIMARY KEY,
-  "board_id" int UNIQUE NOT NULL,
+  "board_id" int NOT NULL,
   "name" text UNIQUE NOT NULL,
   "description" text
 );
 
 CREATE TABLE "Ticket" (
   "id" serial PRIMARY KEY,
-  "swimlane_id" int UNIQUE NOT NULL,
+  "swimlane_id" int NOT NULL,
   "name" text UNIQUE NOT NULL,
   "description" text,
   "start_date" timestamp,
