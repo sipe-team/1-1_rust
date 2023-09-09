@@ -33,6 +33,15 @@ pub async fn create_boards(
     }
 }
 
+#[get("/api/v1/boards/{id}")]
+pub async fn get_board(path: web::Path<i32>, data: web::Data<AppState>) -> impl Responder {
+    match Board::find_by_id(path.into_inner()).one(&data.conn).await {
+        Ok(Some(obj)) => HttpResponse::Ok().json(obj),
+        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+        Ok(None) => HttpResponse::NotFound().body("404"),
+    }
+}
+
 #[put("/api/v1/boards/{id}")]
 pub async fn update_board(
     path: web::Path<i32>,

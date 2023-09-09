@@ -21,6 +21,7 @@ async fn main() -> std::io::Result<()> {
             .service(api::board::get_boards)
             .service(api::board::create_boards)
             .service(api::board::update_board)
+            .service(api::board::get_board)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
