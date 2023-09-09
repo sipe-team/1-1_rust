@@ -53,7 +53,7 @@ async fn update_swimlane(
             {
                 Ok(swimlane_option) => match swimlane_option {
                     Some(swimlane) => HttpResponse::Ok().json(swimlane),
-                    None => HttpResponse::NotFound().body("해당 swimlane을 찾을 수 없습니다"),
+                    None => HttpResponse::NotFound().body("swimlane 수정 중 오류가 발생했습니다"),
                 },
                 Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
             }

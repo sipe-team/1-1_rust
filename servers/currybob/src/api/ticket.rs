@@ -53,7 +53,7 @@ async fn update_ticket(
             {
                 Ok(ticket_option) => match ticket_option {
                     Some(ticket) => HttpResponse::Ok().json(ticket),
-                    None => HttpResponse::NotFound().body("해당 ticket을 찾을 수 없습니다"),
+                    None => HttpResponse::NotFound().body("ticket 수정 중 오류가 발생했습니다"),
                 },
                 Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
             }

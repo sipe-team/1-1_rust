@@ -53,7 +53,7 @@ async fn update_board(
             {
                 Ok(board_option) => match board_option {
                     Some(board) => HttpResponse::Ok().json(board),
-                    None => HttpResponse::NotFound().body("해당 board를 찾을 수 없습니다"),
+                    None => HttpResponse::NotFound().body("board 수정 중 오류가 발생했습니다"),
                 },
                 Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
             }

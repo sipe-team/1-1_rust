@@ -30,13 +30,9 @@ pub async fn update(
 ) -> Result<Option<board::Model>, DbErr> {
     match find_one(id, conn).await? {
         Some(board) => {
-            if new_board.name != board.name {
-                let mut active_model = board.into_active_model();
-                active_model.name = ActiveValue::Set(new_board.name.to_owned());
-                Ok(Some(active_model.update(conn).await?))
-            } else {
-                Ok(None)
-            }
+            let mut active_model = board.into_active_model();
+            active_model.name = ActiveValue::Set(new_board.name.to_owned());
+            Ok(Some(active_model.update(conn).await?))
         }
         None => Ok(None),
     }

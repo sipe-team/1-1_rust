@@ -19,6 +19,11 @@ pub async fn create(
     new_swimlane: swimlane::CreateModel,
     conn: &DatabaseConnection
 ) -> Result<swimlane::Model, DbErr> {
+    let board = board_service::find_one(new_swimlane.board_id, conn).await?;
+    if board.is_none() {
+        return Err(DbErr::Custom("board가 존재하지 않습니다".into()))
+    }
+
     swimlane::ActiveModel {
         name: ActiveValue::Set(new_swimlane.name),
         board_id: ActiveValue::Set(new_swimlane.board_id),
@@ -40,15 +45,28 @@ pub async fn update(
             let mut active_model = swimlane.into_active_model();
 
             if let Some(new_name) = new_swimlane.name {
+                let same_name_swimlane = swimlane::Entity::find()
+                    .filter(swimlane::Column::Name.eq(new_name.to_owned()))
+                    .one(conn)
+                    .await?;
+
+                if same_name_swimlane.is_some() {
+                    return Err(DbErr::Custom("같은 이름의 swimlane이 존재합니다".into()))
+                }
+
                 active_model.name = ActiveValue::Set(new_name);
                 changes_detected = true;
+                
             }
 
             if let Some(new_board_id) = new_swimlane.board_id {
-                if board_service::find_one(new_board_id, conn).await?.is_some() {
-                    active_model.board_id = ActiveValue::Set(new_board_id);
-                    changes_detected = true;
+                let board = board_service::find_one(new_board_id, conn).await?;
+                if board.is_none() {
+                    return Err(DbErr::Custom("board가 존재하지 않습니다".into()))
                 }
+
+                active_model.board_id = ActiveValue::Set(new_board_id);
+                changes_detected = true;
             }
             
             if let Some(new_description) = new_swimlane.description {
