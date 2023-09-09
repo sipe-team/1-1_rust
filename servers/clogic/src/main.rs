@@ -1,18 +1,25 @@
+mod api;
+mod models;
 mod settings;
 
-use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{web, App, HttpServer};
+use env_logger::init;
 use settings::app::AppState;
-
-#[get("/")]
-async fn hello(data: web::Data<AppState>) -> impl Responder {
-    let _conn = &data.conn;
-    HttpResponse::Ok().body("Hello world!")
-}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| App::new().service(hello).app_data(AppState::new()))
-        .bind(("127.0.0.1", 8080))?
-        .run()
-        .await
+    std::env::set_var("RUST_LOG", "debug");
+    init();
+
+    let state = AppState::new().await;
+
+    HttpServer::new(move || {
+        App::new()
+            .app_data(web::Data::new(state.clone()))
+            .service(api::hello)
+            .service(api::board::get_boards)
+    })
+    .bind(("127.0.0.1", 8080))?
+    .run()
+    .await
 }
