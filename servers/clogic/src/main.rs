@@ -1,5 +1,6 @@
 mod api;
 mod models;
+mod schemas;
 mod settings;
 
 use actix_web::{web, App, HttpServer};
@@ -18,6 +19,8 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(state.clone()))
             .service(api::hello)
             .service(api::board::get_boards)
+            .service(api::board::create_boards)
+            .service(api::board::update_board)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
