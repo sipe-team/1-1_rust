@@ -1,4 +1,5 @@
 use crate::entity::ticket;
+use chrono::NaiveDateTime;
 use sea_orm::{
     entity::ActiveValue, ActiveModelTrait, DatabaseConnection, DbErr, DeleteResult, EntityTrait, ModelTrait, IntoActiveModel, ColumnTrait, QueryFilter
 };
@@ -71,13 +72,17 @@ pub async fn update(
                 changes_detected = true;
             }
 
-            if let Some(new_start_date) = new_ticket.start_date {
-                active_model.start_date = ActiveValue::Set(Some(new_start_date));
+            if let Some(new_start_date) = new_ticket.start_date {            
+                let start_date = NaiveDateTime::from_timestamp_opt(new_start_date, 0);
+
+                active_model.start_date = ActiveValue::Set(start_date);
                 changes_detected = true;
             }
 
             if let Some(new_end_date) = new_ticket.end_date {
-                active_model.end_date = ActiveValue::Set(Some(new_end_date));
+                let end_date = NaiveDateTime::from_timestamp_opt(new_end_date, 0);
+
+                active_model.end_date = ActiveValue::Set(end_date);
                 changes_detected = true;
             }
 
