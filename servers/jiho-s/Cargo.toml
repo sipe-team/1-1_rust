@@ -26,6 +26,7 @@ anyhow = "1"
 validator = "0.16"
 tracing-actix-web = "0.7"
 secrecy = {version = "0.8", features = ["serde"] }
+async-trait = "0.1.73"
 
 [dev-dependencies]
 once_cell = "1.18"

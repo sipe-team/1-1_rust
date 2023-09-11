@@ -1,36 +1,24 @@
-use actix_web::{App, HttpServer, Responder, web};
-use sea_orm::{Database, DatabaseConnection, EntityTrait};
-use tracing_subscriber::fmt::format;
+use std::net::TcpListener;
 
+use sea_orm::Database;
+
+use jiho_web::configuration::get_configuration;
+use jiho_web::startup::run;
+use jiho_web::telemetry::{get_subscriber, init_subscriber};
 use migration::{Migrator, MigratorTrait};
-use crate::entities::prelude::Post;
 
-mod entities;
-
-const DATABASE_URL: &str = "postgres://postgres:password@localhost:5432/todo";
-
-#[tokio::main]
+#[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let db = Database::connect(DATABASE_URL).await.unwrap();
+    let subscriber = get_subscriber("jiho-todo".into(), "info".into(), std::io::stdout);
+    init_subscriber(subscriber);
+
+    let configuration = get_configuration().expect("Failed to read configuration.");
+
+    let db = Database::connect(configuration.database.option()).await
+        .expect("Failed to connect database.");
     Migrator::up(&db, None).await.unwrap();
 
+    let listener = TcpListener::bind(configuration.application.address())?;
 
-    HttpServer::new(move || {
-        App::new()
-            .app_data(web::Data::new(db.clone()))
-            .route("/", web::get().to(greet))
-            .route("/test", web::get().to(test))
-    })
-        .bind("127.0.0.1:10004")?
-        .run()
-        .await
-}
-
-async fn greet() -> impl Responder {
-    format!("Hello world!")
-}
-
-async fn test(db: web::Data<DatabaseConnection>) -> impl Responder {
-    let post = Post::find_by_id(1).one(db.get_ref()).await.unwrap().unwrap();
-    return format!("{} {} {}", post.id, post.title, post.text);
+    run(listener, db)?.await
 }
