@@ -2,5 +2,5 @@
 members = [
     "rustlings/*",
     "servers/*",
-    "servers/clogic/migration"
+    "servers/*/migration"
 ]
