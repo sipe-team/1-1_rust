@@ -16,3 +16,11 @@ pub struct TicketUpdateRequest {
     pub end_date: Option<i64>,
     pub priority: Option<i32>,
 }
+
+#[derive(Deserialize)]
+pub struct TicketSortQuery {
+    pub name: Option<String>,
+    pub start_date: Option<String>,
+    pub end_date: Option<String>,
+    pub priority: Option<String>,
+}

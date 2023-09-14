@@ -1,31 +1,34 @@
-use crate::domain::dto::ticket::{TicketCreateRequest, TicketUpdateRequest};
+use crate::domain::dto::ticket::{TicketCreateRequest, TicketUpdateRequest, TicketSortQuery};
 use crate::services::ticket_service;
 use crate::AppState;
 
+use actix_web::web::Query;
 use actix_web::{delete, get, post, put, web, HttpResponse, Responder, Scope};
 
 #[get("")]
-async fn find_all_tickets(state: web::Data<AppState>) -> impl Responder {
-    match ticket_service::find_all(&state.db_conn).await {
+async fn find_all(
+    state: web::Data<AppState>,
+    query: Query<TicketSortQuery>
+) -> impl Responder {
+    match ticket_service::find_all(&state.db_conn, &query).await {
         Ok(tickets) => HttpResponse::Ok().json(tickets),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
 
 #[get("/{ticket_id}")]
-async fn find_one_ticket(
+async fn find_one(
     state: web::Data<AppState>,
-    ticket_id: web::Path<String>,
+    ticket_id: web::Path<i32>,
 ) -> impl Responder {
-    match ticket_id.parse::<i32>() {
-        Ok(ticket_id) => match ticket_service::find_one(ticket_id, &state.db_conn).await {
-            Ok(ticket_option) => match ticket_option {
-                Some(ticket) => HttpResponse::Ok().json(ticket),
-                None => HttpResponse::NotFound().body("해당 ticket을 찾을 수 없습니다"),
-            },
-            Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+    let ticket_id = ticket_id.into_inner();
+
+    match ticket_service::find_one(ticket_id, &state.db_conn).await {
+        Ok(ticket_option) => match ticket_option {
+            Some(ticket) => HttpResponse::Ok().json(ticket),
+            None => HttpResponse::NotFound().body("해당 ticket을 찾을 수 없습니다"),
         },
-        Err(err) => HttpResponse::NotFound().body(err.to_string()),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
 
@@ -43,22 +46,15 @@ async fn add_ticket(
 #[put("/{ticket_id}")]
 async fn update_ticket(
     state: web::Data<AppState>,
-    ticket_id: web::Path<String>,
-    new_ticket: web::Json<TicketUpdateRequest>,
+    ticket_id: web::Path<i32>,
+    payload: web::Json<TicketUpdateRequest>,
 ) -> impl Responder {
-    match ticket_id.parse::<i32>() {
-        Ok(ticket_id) => {
-            match ticket_service::update(&state.db_conn, ticket_id, new_ticket.into_inner())
-                .await
-            {
-                Ok(ticket_option) => match ticket_option {
-                    Some(ticket) => HttpResponse::Ok().json(ticket),
-                    None => HttpResponse::NotFound().body("ticket 수정 중 오류가 발생했습니다"),
-                },
-                Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
-            }
-        }
-        Err(err) => HttpResponse::NotFound().body(err.to_string()),
+    let ticket_id = ticket_id.into_inner();
+    let payload = payload.into_inner();
+
+    match ticket_service::update(&state.db_conn, ticket_id, payload).await {
+        Ok(ticket) => HttpResponse::Ok().json(ticket),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
 
@@ -80,8 +76,8 @@ async fn delete_ticket(state: web::Data<AppState>, ticket_id: web::Path<String>)
 
 pub fn tickets_api() -> Scope {
     web::scope("/tickets")
-        .service(find_all_tickets)
-        .service(find_one_ticket)
+        .service(find_all)
+        .service(find_one)
         .service(add_ticket)
         .service(update_ticket)
         .service(delete_ticket)
