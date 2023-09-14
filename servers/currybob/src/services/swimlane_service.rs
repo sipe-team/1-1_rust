@@ -22,7 +22,8 @@ pub async fn create(
 ) -> Result<swimlane::Model, DbErr> {
     let board = board_service::find_one(new_swimlane.board_id, conn).await?;
     if board.is_none() {
-        return Err(DbErr::Custom("board가 존재하지 않습니다".into()))
+        let message = "board가 존재하지 않습니다".to_owned();
+        return Err(DbErr::Custom(message))
     }
 
     swimlane::ActiveModel {
@@ -38,50 +39,49 @@ pub async fn create(
 pub async fn update(
     conn: &DatabaseConnection,
     id: i32,
-    new_swimlane: SwimlaneUpdateRequest,
-) -> Result<Option<swimlane::Model>, DbErr> {
-    match find_one(id, conn).await? {
-        Some(swimlane) => {
-            let mut changes_detected = false;
+    update_data: SwimlaneUpdateRequest,
+) -> Result<swimlane::Model, DbErr> {
+    let exist = find_one(id, conn).await;
+
+    match exist {
+        Ok(Some(swimlane)) => {
             let mut active_model = swimlane.into_active_model();
 
-            if let Some(new_name) = new_swimlane.name {
+            if let Some(new_name) = update_data.name {
                 let same_name_swimlane = swimlane::Entity::find()
                     .filter(swimlane::Column::Name.eq(new_name.to_owned()))
                     .one(conn)
                     .await?;
 
                 if same_name_swimlane.is_some() {
-                    return Err(DbErr::Custom("같은 이름의 swimlane이 존재합니다".into()))
+                    let message = "같은 이름의 swimlane이 존재합니다".to_owned();
+                    return Err(DbErr::Custom(message))
                 }
 
                 active_model.name = ActiveValue::Set(new_name);
-                changes_detected = true;
-                
             }
 
-            if let Some(new_board_id) = new_swimlane.board_id {
+            if let Some(new_board_id) = update_data.board_id {
                 let board = board_service::find_one(new_board_id, conn).await?;
                 if board.is_none() {
-                    return Err(DbErr::Custom("board가 존재하지 않습니다".into()))
+                    let message = "board가 존재하지 않습니다".to_owned();
+                    return Err(DbErr::Custom(message))
                 }
 
                 active_model.board_id = ActiveValue::Set(new_board_id);
-                changes_detected = true;
-            }
-            
-            if let Some(new_description) = new_swimlane.description {
-                active_model.description = ActiveValue::Set(Some(new_description));
-                changes_detected = true;
             }
 
-            if changes_detected {
-                Ok(Some(active_model.update(conn).await?))
-            } else {
-                Ok(None)
+            if let Some(new_description) = update_data.description {
+                active_model.description = ActiveValue::Set(Some(new_description));
             }
+
+            active_model.update(conn).await
         }
-        None => Ok(None),
+        Ok(None) => {
+            let message = "해당 레코드가 없습니다".to_owned();
+            return Err(DbErr::RecordNotFound(message))
+        },
+        Err(e) => return Err(e),
     }
 }
 

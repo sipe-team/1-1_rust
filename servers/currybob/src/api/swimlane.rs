@@ -1,11 +1,13 @@
 use crate::domain::dto::swimlane::{SwimlaneCreateRequest, SwimlaneUpdateRequest};
-use crate::services::swimlane_service;
+use crate::domain::dto::ticket::TicketSortQuery;
+use crate::services::{swimlane_service, ticket_service};
 use crate::AppState;
 
+use actix_web::web::Query;
 use actix_web::{delete, get, post, put, web, HttpResponse, Responder, Scope};
 
 #[get("")]
-async fn find_all_swimlanes(state: web::Data<AppState>) -> impl Responder {
+async fn find_all(state: web::Data<AppState>) -> impl Responder {
     match swimlane_service::find_all(&state.db_conn).await {
         Ok(swimlanes) => HttpResponse::Ok().json(swimlanes),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
@@ -13,19 +15,32 @@ async fn find_all_swimlanes(state: web::Data<AppState>) -> impl Responder {
 }
 
 #[get("/{swimlane_id}")]
-async fn find_one_swimlane(
+async fn find_one(
     state: web::Data<AppState>,
-    swimlane_id: web::Path<String>,
+    swimlane_id: web::Path<i32>,
 ) -> impl Responder {
-    match swimlane_id.parse::<i32>() {
-        Ok(swimlane_id) => match swimlane_service::find_one(swimlane_id, &state.db_conn).await {
-            Ok(swimlane_option) => match swimlane_option {
-                Some(swimlane) => HttpResponse::Ok().json(swimlane),
-                None => HttpResponse::NotFound().body("해당 swimlane을 찾을 수 없습니다"),
-            },
-            Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+    let swimlane_id = swimlane_id.into_inner();
+
+    match swimlane_service::find_one(swimlane_id, &state.db_conn).await {
+        Ok(exist) => match exist {
+            Some(swimlane) => HttpResponse::Ok().json(swimlane),
+            None => HttpResponse::NotFound().body("해당 swimlane을 찾을 수 없습니다"),
         },
-        Err(err) => HttpResponse::NotFound().body(err.to_string()),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+    }
+}
+
+#[get("/{swimlane_id}/tickets")]
+async fn find_all_tickets_by_id(
+    state: web::Data<AppState>,
+    swimlane_id: web::Path<i32>,
+    query: Query<TicketSortQuery>
+) -> impl Responder {
+    let swimlane_id = swimlane_id.into_inner();
+
+    match ticket_service::find_all_by_swimlane_id(swimlane_id, &state.db_conn, &query).await {
+        Ok(tickets) => HttpResponse::Ok().json(tickets),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
 
@@ -43,22 +58,15 @@ async fn add_swimlane(
 #[put("/{swimlane_id}")]
 async fn update_swimlane(
     state: web::Data<AppState>,
-    swimlane_id: web::Path<String>,
-    new_swimlane: web::Json<SwimlaneUpdateRequest>,
+    swimlane_id: web::Path<i32>,
+    payload: web::Json<SwimlaneUpdateRequest>,
 ) -> impl Responder {
-    match swimlane_id.parse::<i32>() {
-        Ok(swimlane_id) => {
-            match swimlane_service::update(&state.db_conn, swimlane_id, new_swimlane.into_inner())
-                .await
-            {
-                Ok(swimlane_option) => match swimlane_option {
-                    Some(swimlane) => HttpResponse::Ok().json(swimlane),
-                    None => HttpResponse::NotFound().body("swimlane 수정 중 오류가 발생했습니다"),
-                },
-                Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
-            }
-        }
-        Err(err) => HttpResponse::NotFound().body(err.to_string()),
+    let swimlane_id = swimlane_id.into_inner();
+    let payload = payload.into_inner();
+
+    match swimlane_service::update(&state.db_conn, swimlane_id, payload).await {
+        Ok(swimlane) => HttpResponse::Ok().json(swimlane),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
 
@@ -80,8 +88,9 @@ async fn delete_swimlane(state: web::Data<AppState>, swimlane_id: web::Path<Stri
 
 pub fn swimlanes_api() -> Scope {
     web::scope("/swimlanes")
-        .service(find_all_swimlanes)
-        .service(find_one_swimlane)
+        .service(find_all)
+        .service(find_all_tickets_by_id)
+        .service(find_one)
         .service(add_swimlane)
         .service(update_swimlane)
         .service(delete_swimlane)

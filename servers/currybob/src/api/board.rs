@@ -15,17 +15,16 @@ async fn find_all_boards(state: web::Data<AppState>) -> impl Responder {
 #[get("/{board_id}")]
 async fn find_one_board(
     state: web::Data<AppState>,
-    board_id: web::Path<String>,
+    board_id: web::Path<i32>,
 ) -> impl Responder {
-    match board_id.parse::<i32>() {
-        Ok(board_id) => match board_service::find_one(board_id, &state.db_conn).await {
-            Ok(board_option) => match board_option {
-                Some(board) => HttpResponse::Ok().json(board),
-                None => HttpResponse::NotFound().body("해당 board를 찾을 수 없습니다"),
-            },
-            Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+    let board_id = board_id.into_inner();
+
+    match board_service::find_one(board_id, &state.db_conn).await {
+        Ok(board_option) => match board_option {
+            Some(board) => HttpResponse::Ok().json(board),
+            None => HttpResponse::NotFound().body("해당 board를 찾을 수 없습니다"),
         },
-        Err(err) => HttpResponse::NotFound().body(err.to_string()),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
 
@@ -43,22 +42,15 @@ async fn add_board(
 #[put("/{board_id}")]
 async fn update_board(
     state: web::Data<AppState>,
-    board_id: web::Path<String>,
-    new_board: web::Json<BoardUpdateRequest>,
+    board_id: web::Path<i32>,
+    payload: web::Json<BoardUpdateRequest>,
 ) -> impl Responder {
-    match board_id.parse::<i32>() {
-        Ok(board_id) => {
-            match board_service::update(&state.db_conn, board_id, new_board.into_inner())
-                .await
-            {
-                Ok(board_option) => match board_option {
-                    Some(board) => HttpResponse::Ok().json(board),
-                    None => HttpResponse::NotFound().body("board 수정 중 오류가 발생했습니다"),
-                },
-                Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
-            }
-        }
-        Err(err) => HttpResponse::NotFound().body(err.to_string()),
+    let board_id = board_id.into_inner();
+    let payload = payload.into_inner();
+
+    match board_service::update(&state.db_conn, board_id, payload).await {
+        Ok(board) => HttpResponse::Ok().json(board),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
 

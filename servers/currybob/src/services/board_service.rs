@@ -1,8 +1,10 @@
 use crate::entity::{board, swimlane};
 use crate::domain::dto::board::{BoardCreateRequest, BoardUpdateRequest};
+
 use sea_orm::{
     entity::ActiveValue, ActiveModelTrait, DatabaseConnection, DbErr, DeleteResult, EntityTrait, ModelTrait, IntoActiveModel, QueryFilter, ColumnTrait, PaginatorTrait
 };
+use serde_json::json;
 
 pub async fn find_one(id: i32, conn: &DatabaseConnection) -> Result<Option<board::Model>, DbErr> {
     board::Entity::find_by_id(id).one(conn).await
@@ -27,15 +29,25 @@ pub async fn create(
 pub async fn update(
     conn: &DatabaseConnection,
     id: i32,
-    new_board: BoardUpdateRequest,
-) -> Result<Option<board::Model>, DbErr> {
-    match find_one(id, conn).await? {
-        Some(board) => {
+    update_data: BoardUpdateRequest,
+) -> Result<board::Model, DbErr> {
+    let exist = find_one(id, conn).await;
+
+    match exist {
+        Ok(Some(board)) => {
             let mut active_model = board.into_active_model();
-            active_model.name = ActiveValue::Set(new_board.name.to_owned());
-            Ok(Some(active_model.update(conn).await?))
-        }
-        None => Ok(None),
+            active_model = match active_model.set_from_json(json!(update_data)) {
+                Ok(()) => active_model,
+                Err(e) => return Err(e),
+            };
+
+            active_model.update(conn).await
+        },
+        Ok(None) => {
+            let message = "해당 레코드가 없습니다".to_owned();
+            return Err(DbErr::RecordNotFound(message))
+        },
+        Err(e) => return Err(e),
     }
 }
 
