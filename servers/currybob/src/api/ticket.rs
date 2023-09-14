@@ -1,4 +1,4 @@
-use crate::entity::ticket;
+use crate::domain::dto::ticket::{TicketCreateRequest, TicketUpdateRequest};
 use crate::services::ticket_service;
 use crate::AppState;
 
@@ -32,7 +32,7 @@ async fn find_one_ticket(
 #[post("")]
 async fn add_ticket(
     state: web::Data<AppState>,
-    data: web::Json<ticket::CreateModel>,
+    data: web::Json<TicketCreateRequest>,
 ) -> impl Responder {
     match ticket_service::create(data.into_inner(), &state.db_conn).await {
         Ok(ticket) => HttpResponse::Ok().json(ticket),
@@ -44,7 +44,7 @@ async fn add_ticket(
 async fn update_ticket(
     state: web::Data<AppState>,
     ticket_id: web::Path<String>,
-    new_ticket: web::Json<ticket::UpdateModel>,
+    new_ticket: web::Json<TicketUpdateRequest>,
 ) -> impl Responder {
     match ticket_id.parse::<i32>() {
         Ok(ticket_id) => {

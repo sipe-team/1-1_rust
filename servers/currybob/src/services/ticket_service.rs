@@ -1,4 +1,6 @@
 use crate::entity::ticket;
+use crate::domain::dto::ticket::{TicketUpdateRequest, TicketCreateRequest};
+
 use chrono::NaiveDateTime;
 use sea_orm::{
     entity::ActiveValue, ActiveModelTrait, DatabaseConnection, DbErr, DeleteResult, EntityTrait, ModelTrait, IntoActiveModel, ColumnTrait, QueryFilter
@@ -15,7 +17,7 @@ pub async fn find_all(conn: &DatabaseConnection) -> Result<Vec<ticket::Model>, D
 }
 
 pub async fn create(
-    new_ticket: ticket::CreateModel,
+    new_ticket: TicketCreateRequest,
     conn: &DatabaseConnection
 ) -> Result<ticket::Model, DbErr> {
     let swimlane = swimlane_service::find_one(new_ticket.swimlane_id, conn).await?;
@@ -36,7 +38,7 @@ pub async fn create(
 pub async fn update(
     conn: &DatabaseConnection,
     id: i32,
-    new_ticket: ticket::UpdateModel,
+    new_ticket: TicketUpdateRequest,
 ) -> Result<Option<ticket::Model>, DbErr> {
     match find_one(id, conn).await? {
         Some(ticket) => {

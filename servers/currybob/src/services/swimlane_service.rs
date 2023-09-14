@@ -1,3 +1,4 @@
+use crate::domain::dto::swimlane::{SwimlaneUpdateRequest, SwimlaneCreateRequest};
 use crate::entity::{swimlane, ticket};
 use crate::services::board_service;
 
@@ -16,7 +17,7 @@ pub async fn find_all(conn: &DatabaseConnection) -> Result<Vec<swimlane::Model>,
 }
 
 pub async fn create(
-    new_swimlane: swimlane::CreateModel,
+    new_swimlane: SwimlaneCreateRequest,
     conn: &DatabaseConnection
 ) -> Result<swimlane::Model, DbErr> {
     let board = board_service::find_one(new_swimlane.board_id, conn).await?;
@@ -37,7 +38,7 @@ pub async fn create(
 pub async fn update(
     conn: &DatabaseConnection,
     id: i32,
-    new_swimlane: swimlane::UpdateModel,
+    new_swimlane: SwimlaneUpdateRequest,
 ) -> Result<Option<swimlane::Model>, DbErr> {
     match find_one(id, conn).await? {
         Some(swimlane) => {

@@ -5,6 +5,7 @@ use sea_orm::{Database, DatabaseConnection};
 mod entity;
 mod api;
 mod services;
+mod domain;
 
 #[derive(Debug, Clone)]
 pub struct AppState {

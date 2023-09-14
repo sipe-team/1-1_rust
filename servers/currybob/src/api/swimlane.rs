@@ -1,4 +1,4 @@
-use crate::entity::swimlane;
+use crate::domain::dto::swimlane::{SwimlaneCreateRequest, SwimlaneUpdateRequest};
 use crate::services::swimlane_service;
 use crate::AppState;
 
@@ -32,7 +32,7 @@ async fn find_one_swimlane(
 #[post("")]
 async fn add_swimlane(
     state: web::Data<AppState>,
-    data: web::Json<swimlane::CreateModel>
+    data: web::Json<SwimlaneCreateRequest>
 ) -> impl Responder {
     match swimlane_service::create(data.into_inner(), &state.db_conn).await {
         Ok(swimlane) => HttpResponse::Ok().json(swimlane),
@@ -44,7 +44,7 @@ async fn add_swimlane(
 async fn update_swimlane(
     state: web::Data<AppState>,
     swimlane_id: web::Path<String>,
-    new_swimlane: web::Json<swimlane::UpdateModel>,
+    new_swimlane: web::Json<SwimlaneUpdateRequest>,
 ) -> impl Responder {
     match swimlane_id.parse::<i32>() {
         Ok(swimlane_id) => {

@@ -1,4 +1,4 @@
-use crate::entity::board;
+use crate::domain::dto::board::{BoardCreateRequest, BoardUpdateRequest};
 use crate::services::board_service;
 use crate::AppState;
 
@@ -32,7 +32,7 @@ async fn find_one_board(
 #[post("")]
 async fn add_board(
     state: web::Data<AppState>,
-    data: web::Json<board::CreateModel>
+    data: web::Json<BoardCreateRequest>
 ) -> impl Responder {
     match board_service::create(data.into_inner(), &state.db_conn).await {
         Ok(board) => HttpResponse::Ok().json(board),
@@ -44,7 +44,7 @@ async fn add_board(
 async fn update_board(
     state: web::Data<AppState>,
     board_id: web::Path<String>,
-    new_board: web::Json<board::UpdateModel>,
+    new_board: web::Json<BoardUpdateRequest>,
 ) -> impl Responder {
     match board_id.parse::<i32>() {
         Ok(board_id) => {

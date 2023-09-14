@@ -1,4 +1,5 @@
 use crate::entity::{board, swimlane};
+use crate::domain::dto::board::{BoardCreateRequest, BoardUpdateRequest};
 use sea_orm::{
     entity::ActiveValue, ActiveModelTrait, DatabaseConnection, DbErr, DeleteResult, EntityTrait, ModelTrait, IntoActiveModel, QueryFilter, ColumnTrait, PaginatorTrait
 };
@@ -12,7 +13,7 @@ pub async fn find_all(conn: &DatabaseConnection) -> Result<Vec<board::Model>, Db
 }
 
 pub async fn create(
-    new_board: board::CreateModel,
+    new_board: BoardCreateRequest,
     conn: &DatabaseConnection
 ) -> Result<board::Model, DbErr> {
     board::ActiveModel {
@@ -26,7 +27,7 @@ pub async fn create(
 pub async fn update(
     conn: &DatabaseConnection,
     id: i32,
-    new_board: board::UpdateModel,
+    new_board: BoardUpdateRequest,
 ) -> Result<Option<board::Model>, DbErr> {
     match find_one(id, conn).await? {
         Some(board) => {
